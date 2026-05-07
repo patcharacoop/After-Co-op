@@ -1,0 +1,12 @@
+{
+  "name": "coop-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard ผลการประเมินสหกิจศึกษา",
+  "scripts": {
+    "dev": "npx http-server -p 8000 -c-1 --cors",
+    "start": "npx http-server -p 8000 -c-1 --cors"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
