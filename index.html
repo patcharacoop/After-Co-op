@@ -539,10 +539,22 @@ async function loadData() {
   }
 }
 
+function normalizeSemester(s) {
+  if (!s) return '';
+  // Remove common prefixes and normalize format
+  let normalized = s
+    .replace(/ภาคการศึกษาที่?/gi, '')
+    .replace(/semester\s*/gi, '')
+    .replace(/\s*-\s*/g, '/')
+    .replace(/\s+/g, '')
+    .trim();
+  return normalized;
+}
+
 function populateFilters() {
   const schools = [...new Set(allData.map(d => d.school).filter(Boolean))].sort();
   const majors = [...new Set(allData.map(d => d.major).filter(Boolean))].sort();
-  const semesters = [...new Set(allData.map(d => d.semester).filter(Boolean))].sort();
+  const semesters = [...new Set(allData.map(d => normalizeSemester(d.semester)).filter(Boolean))].sort();
 
   const schoolSel = document.getElementById('filterSchool');
   schools.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; schoolSel.appendChild(o); });
@@ -600,7 +612,7 @@ function applyFilters() {
   filteredData = allData.filter(d => {
     if (school && d.school !== school) return false;
     if (major && d.major !== major) return false;
-    if (semester && d.semester !== semester) return false;
+    if (semester && normalizeSemester(d.semester) !== semester) return false;
     if (search) {
       const haystack = (d.name + d.school + d.major + d.org + d.province).toLowerCase();
       if (!haystack.includes(search)) return false;
