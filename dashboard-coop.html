@@ -1076,6 +1076,52 @@ function renderSummaryChart() {
 
 loadData();
 
+function renderAccordion() {
+  const schoolMajors = {
+    'สารสนเทศศาสตร์': ['ดิจิทัลคอนเทนต์และสื่อ 66', 'นวัตกรรมสารสนเทศศาสตร์ทางการแพทย์', 'เทคโนโลยีสารสนเทศและนวัตกรรมดิจิทัล', 'ดิจิทัลคอนเทนต์และสื่อ 65', 'เทคโนโลยีมัลติมีเดีย แอนิเมชันและเกม', 'นิเทศศาสตร์ดิจิทัล'],
+    'การจัดการ': ['ศิลปะการประกอบอาหารอย่างมืออาชีพ 66', 'บริหารธุรกิจ (โลจิสติกส์)', 'บริหารธุรกิจ (การตลาดดิจิทัลและการสร้างแบรนด์)', 'ศิลปะการประกอบอาหารอย่างมืออาชีพ 65', 'อุตสาหกรรมการบริการ'],
+    'การบัญชีและการเงิน': ['บัญชี 66', 'เศรษฐศาสตร์', 'บริหารธุรกิจ (การเงิน)', 'บัญชี 64'],
+    'เทคโนโลยีการเกษตร': ['นวัตกรรรมเกษตร (สัตวศาสตร์)', 'วิทยาศาสตร์อาหารและนวัตกรรม', 'นวัตกรรมเกษตร (พืชศาสตร์)'],
+    'นิติศาสตร์': ['นิติศาสตร์ รหัส 65'],
+    'วิทยาศาสตร์': ['วิทยาศาสตร์', 'วิทยาศาสตร์ทางทะเล'],
+    'ศิลปศาสตร์': ['ภาษาไทย', 'ภาษาจีน2-3.2568', 'ภาษาอังกฤษ'],
+    'แพทยศาสตร์': ['วิทยาศาสตร์การกีฬาและการออกกำลังกาย'],
+    'รัฐศาสตร์และรัฐประศาสนศาสตร์': ['รัฐประศาสนศาสตร์', 'รัฐศาสตร์ (การเมืองการปกครอง)', 'รัฐศาสตร์(ความสัมพันธ์ระหว่างประเทศ)', 'รัฐศาสตร์(อาเซียนศึกษา)'],
+    'วิศวกรรมศาสตร์และเทคโนโลยี': ['ปิโตรเคมีและพอลิเมอร์', 'วิศวกรรมคอมพิวเตอร์และระบบอัจฉริยะ', 'วิศวกรรมเคมี', 'วิศวกรรมไฟฟ้า', 'วิศวกรรมโยธา', 'วิศวกรรมเครื่องกล'],
+    'สาธารณสุขศาสตร์': ['อนามัยสิ่งแวดล้อม', 'อาชีวอนามัยและความปลอดภัย'],
+    'สถาปัตยกรรมศาสตร์และการออกแบบ': ['สถาปัตยกรรมศาสตร์', 'การออกแบบภายใน']
+  };
+  
+  const container = document.getElementById('accordionSummary');
+  let html = '';
+  
+  for (const [school, majors] of Object.entries(schoolMajors)) {
+    const schoolTotal = majors.reduce((sum, m) => sum + (filteredData.filter(d => d.major === m).length), 0);
+    html += `<div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span>${esc(school)}</span>
+        <span class="accordion-total">${schoolTotal}</span>
+      </div>
+      <div class="accordion-body">
+        ${majors.map(m => {
+          const count = filteredData.filter(d => d.major === m).length;
+          return `<div class="accordion-major">
+            <span>${esc(m)}</span>
+            <span class="count">${count}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  
+  container.innerHTML = html;
+}
+
+function toggleAccordion(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
 // Auto-refresh every 30 seconds
 setInterval(loadData, 30000);
 </script>
