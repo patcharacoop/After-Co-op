@@ -68,6 +68,10 @@
   .form-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: var(--primary-strong); background: var(--surface-container-lowest); border: 1px solid rgba(255, 255, 255, 0.42); border-radius: var(--radius); padding: 10px 14px; font-size: 14px; line-height: 20px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 16px rgba(0, 20, 83, 0.18); transition: transform 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; }
   .form-link:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0, 20, 83, 0.24); }
   .form-link:focus { outline: none; box-shadow: 0 0 0 3px rgba(184, 196, 255, 0.42), 0 10px 20px rgba(0, 20, 83, 0.24); }
+  .refresh-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: var(--inverse-on-surface); background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: var(--radius); padding: 10px 14px; font-size: 14px; line-height: 20px; font-weight: 700; cursor: pointer; transition: background 0.2s ease, transform 0.2s ease; white-space: nowrap; }
+  .refresh-btn:hover { background: rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+  .refresh-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(184, 196, 255, 0.32); }
+  .refresh-btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
   .badge { background: rgba(107, 216, 203, 0.18); color: #eafffb; border: 1px solid rgba(107, 216, 203, 0.38); font-size: 12px; line-height: 16px; padding: 6px 12px; border-radius: 9999px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
   .loading-bar { height: 3px; background: linear-gradient(90deg, var(--tertiary-fixed-dim), var(--inverse-primary), var(--tertiary-fixed-dim)); border-radius: 9999px; margin-top: 16px; animation: shimmer 1.5s infinite; background-size: 200%; }
   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -352,6 +356,7 @@
     </div>
     <div class="header-actions">
       <a class="form-link" href="https://forms.gle/949V44uaJ2pKDSnj6" target="_blank" rel="noopener noreferrer">📝 ไปยังแบบประเมิน</a>
+      <button class="refresh-btn" id="refreshButton" type="button" onclick="loadData()">↻ รีโหลดข้อมูล</button>
       <span class="badge" id="statusBadge">⏳ กำลังโหลด...</span>
     </div>
   </div>
@@ -583,7 +588,108 @@ function tooltipAttrs(label, value, percent) {
 // PIE COLORS
 const PIE_COLORS = ['#1e40af','#00554e','#d97706','#4f46e5','#0f766e','#2563eb','#7c3aed','#0891b2','#65a30d','#be123c','#4338ca','#047857','#ea580c','#0284c7','#4d7c0f'];
 
+const PROGRAM_TO_SCHOOL = {
+  'การออกแบบภายใน': 'สำนักวิชาสถาปัตยกรรมศาสตร์และการออกแบบ',
+  'เกษตรศาสตร์และนวัตกรรม(พืช)': 'สำนักวิชาเทคโนโลยีการเกษตรและอุตสาหกรรมอาหาร',
+  'เกษตรศาสตร์และนวัตกรรม(สัตวศาสตร์)': 'สำนักวิชาเทคโนโลยีการเกษตรและอุตสาหกรรมอาหาร',
+  'ดิจิทัลคอนเทนต์และสื่อ': 'สำนักวิชาสารสนเทศศาสตร์',
+  'เทคโนโลยีมัลติมีเดีย แอนิเมชัน และเกม': 'สำนักวิชาสารสนเทศศาสตร์',
+  'เทคโนโลยีสารสนเทศและนวัตกรรมดิจิทัล': 'สำนักวิชาสารสนเทศศาสตร์',
+  'นวัตกรรมสารสนเทศศาสตร์ทางการแพทย์': 'สำนักวิชาสารสนเทศศาสตร์',
+  'นิติศาสตร์': 'สำนักวิชานิติศาสตร์',
+  'นิเทศศาสตร์ดิจิทัล': 'สำนักวิชาสารสนเทศศาสตร์',
+  'บริหารธุรกิจ(การจัดการธุรกิจการเงินดิจิทัล)': 'สำนักวิชาการบัญชีและการเงิน',
+  'บริหารธุรกิจ(การจัดการโลจิสติกส์)': 'สำนักวิชาการจัดการ',
+  'บริหารธุรกิจ(การตลาดดิจิทัลและการสร้างแบรนด์)': 'สำนักวิชาการจัดการ',
+  'บัญชี': 'สำนักวิชาการบัญชีและการเงิน',
+  'ภาษาจีน': 'สำนักวิชาศิลปศาสตร์',
+  'ภาษาไทย': 'สำนักวิชาศิลปศาสตร์',
+  'ภาษาอังกฤษนานาชาติ (ทวิภาษา)': 'สำนักวิชาศิลปศาสตร์',
+  'ภาษาอังกฤษ': 'สำนักวิชาศิลปศาสตร์',
+  'รัฐประศาสนศาสตร์': 'สำนักวิชารัฐศาสตร์และรัฐประศาสนศาสตร์',
+  'รัฐศาสตร์(การเมืองการปกครอง)': 'สำนักวิชารัฐศาสตร์และรัฐประศาสนศาสตร์',
+  'รัฐศาสตร์(ความสัมพันธ์ระหว่างประเทศ)': 'สำนักวิชารัฐศาสตร์และรัฐประศาสนศาสตร์',
+  'รัฐศาสตร์(อาเซียนศึกษา)': 'สำนักวิชารัฐศาสตร์และรัฐประศาสนศาสตร์',
+  'วิทยาศาสตร์': 'สำนักวิชาวิทยาศาสตร์',
+  'วิทยาศาสตร์การกีฬา': 'สำนักวิชาแพทยศาสตร์',
+  'วิทยาศาสตร์ทางทะเล': 'สำนักวิชาวิทยาศาสตร์',
+  'วิทยาศาสตร์อาหารและนวัตกรรม': 'สำนักวิชาเทคโนโลยีการเกษตรและอุตสาหกรรมอาหาร',
+  'วิศวกรรมคอมพิวเตอร์และปัญญาประดิษฐ์': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'วิศวกรรมเคมีและเคมีเภสัชกรรม': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'วิศวกรรมเครื่องกลและหุ่นยนต์': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'วิศวกรรมปิโตรเคมีและพอลิเมอร์': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'วิศวกรรมไฟฟ้า': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'วิศวกรรมโยธา': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'ศิลปะการประกอบอาหารอย่างมืออาชีพ': 'สำนักวิชาการจัดการ',
+  'เศรษฐศาสตร์': 'สำนักวิชาการบัญชีและการเงิน',
+  'สถาปัตยกรรม': 'สำนักวิชาสถาปัตยกรรมศาสตร์และการออกแบบ',
+  'อนามัยสิ่งแวดล้อม': 'สำนักวิชาสาธารณสุขศาสตร์',
+  'อาชีวอนามัยและความปลอดภัย': 'สำนักวิชาสาธารณสุขศาสตร์',
+  'อุตสาหกรรมการบริการ': 'สำนักวิชาการจัดการ'
+};
+
+const SCHOOL_ALIASES = {
+  'การจัดการ': 'สำนักวิชาการจัดการ',
+  'การบัญชีและการเงิน': 'สำนักวิชาการบัญชีและการเงิน',
+  'เทคโนโลยีการเกษตร': 'สำนักวิชาเทคโนโลยีการเกษตรและอุตสาหกรรมอาหาร',
+  'นิติศาสตร์': 'สำนักวิชานิติศาสตร์',
+  'แพทยศาสตร์': 'สำนักวิชาแพทยศาสตร์',
+  'รัฐศาสตร์และรัฐประศาสนศาสตร์': 'สำนักวิชารัฐศาสตร์และรัฐประศาสนศาสตร์',
+  'วิทยาศาสตร์': 'สำนักวิชาวิทยาศาสตร์',
+  'วิศวกรรมศาสตร์และเทคโนโลยี': 'สำนักวิชาวิศวกรรมศาสตร์และเทคโนโลยี',
+  'ศิลปศาสตร์': 'สำนักวิชาศิลปศาสตร์',
+  'สถาปัตยกรรมศาสตร์และการออกแบบ': 'สำนักวิชาสถาปัตยกรรมศาสตร์และการออกแบบ',
+  'สาธารณสุขศาสตร์': 'สำนักวิชาสาธารณสุขศาสตร์',
+  'สารสนเทศศาสตร์': 'สำนักวิชาสารสนเทศศาสตร์'
+};
+
+function normalizeMajorName(major) {
+  return String(major || '')
+    .normalize('NFKC')
+    .replace(/\s+(64|65|66)$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^บริหารธุรกิจ\s*\(โลจิสติกส์\)$/, 'บริหารธุรกิจ(การจัดการโลจิสติกส์)')
+    .replace(/^บริหารธุรกิจ\s*\(การตลาดดิจิทัลและการสร้างแบรนด์\)$/, 'บริหารธุรกิจ(การตลาดดิจิทัลและการสร้างแบรนด์)')
+    .replace(/^บริหารธุรกิจ\s*\(การเงิน\)$/, 'บริหารธุรกิจ(การจัดการธุรกิจการเงินดิจิทัล)')
+    .replace(/^นวัตกรรรมเกษตร\s*\(สัตวศาสตร์\)$/, 'เกษตรศาสตร์และนวัตกรรม(สัตวศาสตร์)')
+    .replace(/^นวัตกรรมเกษตร\s*\(พืชศาสตร์\)$/, 'เกษตรศาสตร์และนวัตกรรม(พืช)')
+    .replace(/^นิติศาสตร์\s*รหัส\s*65$/, 'นิติศาสตร์')
+    .replace(/^วิทยาศาสตร์การกีฬาและการออกกำลังกาย$/, 'วิทยาศาสตร์การกีฬา')
+    .replace(/^รัฐศาสตร์\s*\(การเมืองการปกครอง\)$/, 'รัฐศาสตร์(การเมืองการปกครอง)')
+    .replace(/^ปิโตรเคมีและพอลิเมอร์$/, 'วิศวกรรมปิโตรเคมีและพอลิเมอร์')
+    .replace(/^วิศวกรรมคอมพิวเตอร์และระบบอัจฉริยะ$/, 'วิศวกรรมคอมพิวเตอร์และปัญญาประดิษฐ์')
+    .replace(/^วิศวกรรมเคมี$/, 'วิศวกรรมเคมีและเคมีเภสัชกรรม')
+    .replace(/^วิศวกรรมเครื่องกล$/, 'วิศวกรรมเครื่องกลและหุ่นยนต์')
+    .replace(/^ภาษาจีน2-3\.2568$/, 'ภาษาจีน')
+    .replace(/^เทคโนโลยีมัลติมีเดีย แอนิเมชันและเกม$/, 'เทคโนโลยีมัลติมีเดีย แอนิเมชัน และเกม')
+    .replace(/^สถาปัตยกรรมศาสตร์$/, 'สถาปัตยกรรม');
+}
+
+function normalizeSchoolName(school, major) {
+  const normalizedMajor = normalizeMajorName(major);
+  if (PROGRAM_TO_SCHOOL[normalizedMajor]) return PROGRAM_TO_SCHOOL[normalizedMajor];
+  const normalizedSchool = String(school || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  return SCHOOL_ALIASES[normalizedSchool] || normalizedSchool || 'ไม่ระบุสำนักวิชา';
+}
+
+const SCHOOL_TO_PROGRAMS = Object.entries(PROGRAM_TO_SCHOOL).reduce((acc, [program, school]) => {
+  if (!acc[school]) acc[school] = [];
+  acc[school].push(program);
+  return acc;
+}, {});
+
 async function loadData() {
+  const refreshButton = document.getElementById('refreshButton');
+  const previousFilters = {
+    school: document.getElementById('filterSchool')?.value || '',
+    major: document.getElementById('filterMajor')?.value || '',
+    semester: document.getElementById('filterSemester')?.value || '',
+    search: document.getElementById('searchInput')?.value || ''
+  };
+  document.getElementById('loadingBar').style.display = 'block';
+  document.getElementById('statusBadge').textContent = '⏳ กำลังโหลด...';
+  if (refreshButton) refreshButton.disabled = true;
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
     const res = await fetch(url);
@@ -596,11 +702,12 @@ async function loadData() {
     // Map columns: 57 columns A-AX
     allData = data.table.rows.slice(1).map((row, i) => {
       const cells = row.c || [];
+      const major = normalizeMajorName(cells[3]?.v || '');
       return {
         timestamp: cells[0]?.v || '',
         name: cells[1]?.v || '',
-        school: cells[2]?.v || '',
-        major: cells[3]?.v || '',
+        school: normalizeSchoolName(cells[2]?.v || '', major),
+        major,
         semester: cells[4]?.v || '',
         org: cells[5]?.v || '',
         province: cells[6]?.v || '',
@@ -617,18 +724,34 @@ async function loadData() {
         salary: parseInt(cells[50]?.v) || null, // Column AY = index 50
         comments: cells[51]?.v || '' // Column AX = index 51
       };
-    }).filter(d => d.name);
+    }).filter(d => d.name && d.major !== 'วิศวกรรมซอฟต์แวร์');
 
     populateFilters();
+    restoreFilters(previousFilters);
     applyFilters();
     document.getElementById('loadingBar').style.display = 'none';
     document.getElementById('statusBadge').textContent = '✅ อัปเดตแล้ว';
     document.getElementById('statusBadge').style.background = 'rgba(107, 216, 203, 0.18)';
+    if (refreshButton) refreshButton.disabled = false;
   } catch(e) {
     document.getElementById('tableBody').innerHTML = `<tr><td colspan="7"><div class="loading-state">❌ ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ Google Sheet<br><small>${e.message}</small></div></td></tr>`;
     document.getElementById('statusBadge').textContent = '❌ โหลดไม่ได้';
     document.getElementById('statusBadge').style.background = 'rgba(255, 218, 214, 0.22)';
+    document.getElementById('loadingBar').style.display = 'none';
+    if (refreshButton) refreshButton.disabled = false;
   }
+}
+
+function restoreFilters(filters) {
+  const schoolSel = document.getElementById('filterSchool');
+  const majorSel = document.getElementById('filterMajor');
+  const semesterSel = document.getElementById('filterSemester');
+  const searchInput = document.getElementById('searchInput');
+  if (filters.school && [...schoolSel.options].some(o => o.value === filters.school)) schoolSel.value = filters.school;
+  onSchoolChange();
+  if (filters.major && [...majorSel.options].some(o => o.value === filters.major)) majorSel.value = filters.major;
+  if (filters.semester && [...semesterSel.options].some(o => o.value === filters.semester)) semesterSel.value = filters.semester;
+  if (searchInput) searchInput.value = filters.search;
 }
 
 function normalizeSemester(s) {
@@ -1176,7 +1299,7 @@ function renderSummaryChart() {
   const allMajors = [
     'ดิจิทัลคอนเทนต์และสื่อ 66', 'ศิลปะการประกอบอาหารอย่างมืออาชีพ 66', 'บัญชี 66',
     'บริหารธุรกิจ (โลจิสติกส์)', 'บริหารธุรกิจ (การตลาดดิจิทัลและการสร้างแบรนด์)', 'เศรษฐศาสตร์',
-    'บริหารธุรกิจ (การเงิน)', 'นวัตกรรรมเกษตร (สัตวศาสตร์)', 'วิทยาศาสตร์อาหารและนวัตกรรม',
+    'บริหารธุรกิจ(การจัดการธุรกิจการเงินดิจิทัล)', 'นวัตกรรรมเกษตร (สัตวศาสตร์)', 'วิทยาศาสตร์อาหารและนวัตกรรม',
     'นวัตกรรมเกษตร (พืชศาสตร์)', 'นิติศาสตร์ รหัส 65', 'วิทยาศาสตร์',
     'ภาษาไทย', 'นวัตกรรมสารสนเทศศาสตร์ทางการแพทย์', 'เทคโนโลยีสารสนเทศและนวัตกรรมดิจิทัล',
     'ดิจิทัลคอนเทนต์และสื่อ 65', 'ศิลปะการประกอบอาหารอย่างมืออาชีพ 65', 'อุตสาหกรรมการบริการ',
@@ -1217,26 +1340,23 @@ function renderSummaryChart() {
 loadData();
 
 function renderAccordion() {
-  const schoolMajors = {
-    'สารสนเทศศาสตร์': ['ดิจิทัลคอนเทนต์และสื่อ 66', 'นวัตกรรมสารสนเทศศาสตร์ทางการแพทย์', 'เทคโนโลยีสารสนเทศและนวัตกรรมดิจิทัล', 'ดิจิทัลคอนเทนต์และสื่อ 65', 'เทคโนโลยีมัลติมีเดีย แอนิเมชันและเกม', 'นิเทศศาสตร์ดิจิทัล'],
-    'การจัดการ': ['ศิลปะการประกอบอาหารอย่างมืออาชีพ 66', 'บริหารธุรกิจ (โลจิสติกส์)', 'บริหารธุรกิจ (การตลาดดิจิทัลและการสร้างแบรนด์)', 'ศิลปะการประกอบอาหารอย่างมืออาชีพ 65', 'อุตสาหกรรมการบริการ'],
-    'การบัญชีและการเงิน': ['บัญชี 66', 'เศรษฐศาสตร์', 'บริหารธุรกิจ (การเงิน)', 'บัญชี 64'],
-    'เทคโนโลยีการเกษตร': ['นวัตกรรรมเกษตร (สัตวศาสตร์)', 'วิทยาศาสตร์อาหารและนวัตกรรม', 'นวัตกรรมเกษตร (พืชศาสตร์)'],
-    'นิติศาสตร์': ['นิติศาสตร์ รหัส 65'],
-    'วิทยาศาสตร์': ['วิทยาศาสตร์', 'วิทยาศาสตร์ทางทะเล'],
-    'ศิลปศาสตร์': ['ภาษาไทย', 'ภาษาจีน2-3.2568', 'ภาษาอังกฤษ'],
-    'แพทยศาสตร์': ['วิทยาศาสตร์การกีฬาและการออกกำลังกาย'],
-    'รัฐศาสตร์และรัฐประศาสนศาสตร์': ['รัฐประศาสนศาสตร์', 'รัฐศาสตร์ (การเมืองการปกครอง)', 'รัฐศาสตร์(ความสัมพันธ์ระหว่างประเทศ)', 'รัฐศาสตร์(อาเซียนศึกษา)'],
-    'วิศวกรรมศาสตร์และเทคโนโลยี': ['ปิโตรเคมีและพอลิเมอร์', 'วิศวกรรมคอมพิวเตอร์และระบบอัจฉริยะ', 'วิศวกรรมเคมี', 'วิศวกรรมไฟฟ้า', 'วิศวกรรมโยธา', 'วิศวกรรมเครื่องกล'],
-    'สาธารณสุขศาสตร์': ['อนามัยสิ่งแวดล้อม', 'อาชีวอนามัยและความปลอดภัย'],
-    'สถาปัตยกรรมศาสตร์และการออกแบบ': ['สถาปัตยกรรมศาสตร์', 'การออกแบบภายใน']
-  };
-  
   const container = document.getElementById('accordionSummary');
+  const schoolMajors = {};
+  Object.entries(SCHOOL_TO_PROGRAMS).forEach(([school, programs]) => {
+    schoolMajors[school] = {};
+    programs.forEach(program => { schoolMajors[school][program] = 0; });
+  });
+  filteredData.forEach(d => {
+    const school = d.school || 'ไม่ระบุสำนักวิชา';
+    const major = d.major || 'ไม่ระบุหลักสูตร';
+    if (!schoolMajors[school]) schoolMajors[school] = {};
+    schoolMajors[school][major] = (schoolMajors[school][major] || 0) + 1;
+  });
   let html = '';
   
-  for (const [school, majors] of Object.entries(schoolMajors)) {
-    const schoolTotal = majors.reduce((sum, m) => sum + (filteredData.filter(d => d.major === m).length), 0);
+  for (const [school, majors] of Object.entries(schoolMajors).sort((a, b) => Object.values(b[1]).reduce((x, y) => x + y, 0) - Object.values(a[1]).reduce((x, y) => x + y, 0))) {
+    const majorEntries = Object.entries(majors).sort((a, b) => b[1] - a[1]);
+    const schoolTotal = majorEntries.reduce((sum, [, count]) => sum + count, 0);
     const schoolPercent = filteredData.length > 0 ? ((schoolTotal / filteredData.length) * 100).toFixed(1) : '0.0';
     html += `<div class="accordion-item">
       <div class="accordion-header" onclick="toggleAccordion(this)" ${tooltipAttrs(school, `${schoolTotal.toLocaleString()} คน`, `${schoolPercent}% ของทั้งหมด`)}>
@@ -1244,8 +1364,7 @@ function renderAccordion() {
         <span class="accordion-total">${schoolTotal}</span>
       </div>
       <div class="accordion-body">
-        ${majors.map(m => {
-          const count = filteredData.filter(d => d.major === m).length;
+        ${majorEntries.map(([m, count]) => {
           const percent = filteredData.length > 0 ? ((count / filteredData.length) * 100).toFixed(1) : '0.0';
           return `<div class="accordion-major" ${tooltipAttrs(m, `${count.toLocaleString()} คน`, `${percent}% ของทั้งหมด`)}>
             <span>${esc(m)}</span>
@@ -1263,9 +1382,6 @@ function toggleAccordion(header) {
   header.classList.toggle('open');
   header.nextElementSibling.classList.toggle('open');
 }
-
-// Auto-refresh every 30 seconds
-setInterval(loadData, 30000);
 </script>
 </body>
 </html>
