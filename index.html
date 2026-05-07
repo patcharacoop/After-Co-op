@@ -64,6 +64,10 @@
   .header h1 { font-size: 32px; font-weight: 700; line-height: 40px; color: var(--on-primary); letter-spacing: -0.02em; }
   .header p { color: var(--inverse-on-surface); font-size: 14px; line-height: 20px; margin-top: 4px; }
   .header-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+  .form-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: var(--primary-strong); background: var(--surface-container-lowest); border: 1px solid rgba(255, 255, 255, 0.42); border-radius: var(--radius); padding: 10px 14px; font-size: 14px; line-height: 20px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 16px rgba(0, 20, 83, 0.18); transition: transform 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; }
+  .form-link:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0, 20, 83, 0.24); }
+  .form-link:focus { outline: none; box-shadow: 0 0 0 3px rgba(184, 196, 255, 0.42), 0 10px 20px rgba(0, 20, 83, 0.24); }
   .badge { background: rgba(107, 216, 203, 0.18); color: #eafffb; border: 1px solid rgba(107, 216, 203, 0.38); font-size: 12px; line-height: 16px; padding: 6px 12px; border-radius: 9999px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
   .loading-bar { height: 3px; background: linear-gradient(90deg, var(--tertiary-fixed-dim), var(--inverse-primary), var(--tertiary-fixed-dim)); border-radius: 9999px; margin-top: 16px; animation: shimmer 1.5s infinite; background-size: 200%; }
   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -346,7 +350,10 @@
       <h1>📊 Dashboard ผลการประเมินสหกิจศึกษา</h1>
       <p>แบบสอบถามนักศึกษา หลังกลับจากการปฏิบัติงานสหกิจศึกษา (After Co-op)</p>
     </div>
-    <span class="badge" id="statusBadge">⏳ กำลังโหลด...</span>
+    <div class="header-actions">
+      <a class="form-link" href="https://forms.gle/949V44uaJ2pKDSnj6" target="_blank" rel="noopener noreferrer">📝 ไปยังแบบประเมิน</a>
+      <span class="badge" id="statusBadge">⏳ กำลังโหลด...</span>
+    </div>
   </div>
   <div class="loading-bar" id="loadingBar"></div>
 </div>
