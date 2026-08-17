@@ -385,6 +385,12 @@
         <option value="">-- ทั้งหมด --</option>
       </select>
     </div>
+    <div class="filter-group">
+      <label>🏢 ประเภทหน่วยงาน</label>
+      <select id="filterSector" onchange="applyFilters()">
+        <option value="">-- ทั้งหมด --</option>
+      </select>
+    </div>
     <button class="btn-clear" onclick="clearFilters()">✕ ล้างตัวกรอง</button>
   </div>
 
@@ -679,12 +685,43 @@ const SCHOOL_TO_PROGRAMS = Object.entries(PROGRAM_TO_SCHOOL).reduce((acc, [progr
   return acc;
 }, {});
 
+// ตัวจำแนกประเภทหน่วยงานที่ปฏิบัติงานสหกิจ (ราชการ/เอกชน/ฯลฯ) จาก keyword ในชื่อหน่วยงาน
+const SOE_EXACT = ['บริษัทท่าอากาศยานไทย จำกัด (มหาชน)','บริษัท ท่าอากาศยานไทย จำกัด','บริษัทการบินไทย จำกัด (มหาชน) ท่าอากาศยานนานาชาติภูเก็ต','บริษัท การท่าอากาศยาน จำกัด'];
+const FOREIGN_UNI_KEYWORDS = ['University','Universiti','大学','中正大學','UniMAP','UiTM'];
+const NGO_KEYWORDS = ['สมาคม','มูลนิธิ','GIZ','องค์กรความร่วมมือระหว่างประเทศ','Pmat'];
+const GOV_EXTRA_KEYWORDS = ['ตรวจคนเข้าเมือง','ตม.','immigration','ที่ทำการปกครอง','ที่ทําการปกครอง','ที่ว่าการปกครอง','ด่านศุลกากร','ศูนย์ดำรงธรรม','ศูนย์ดํารงธรรม','ศูนย์อำนวยการบริหารจังหวัดชายแดนภาคใต้','ศูนย์อํานวยการบริหารจังหวัดชายแดนภาคใต้','อัยการ','สถานีวิทยุ','ส่วนบริหารกิจการโทรทัศน์','สำนักงพัฒนาขุมชน','สํานักงพัฒนาขุมชน','สำนักงานพัฒนาชุมชน','แขวงทางหลวง','ศูนย์อนามัย','สำนักเทศ','สํานักเทศ','สำนักเทษ','สํานักเทษ','GISTDA','สถาบันอาหาร','สถาบันวิจัยเทคโนโลยีชีวภาพ','ศูนย์นาโนเทคโนโลยีแห่งชาติ','นาโนเทค','สถาบันนิติวิทยาศาสตร์','การกีฬาแห่งประเทศไทย','ทม.เขารูปช้าง','ศูนย์บริการการศึกษา','ศบศ','พิพิธภัณฑ์ธรรมชาติวิทยาเทพรัตนราชสุดา','สถานีวิจัยเพื่อการพัฒนาชายฝั่ง','สำนักวิชา','สํานักวิชา','ธนาคารออมสิน','ธนาคารอิสลามแห่งประเทศ','สำนักงานจังหว','สํานีกงานจังหว','สำนยุติธรรม','สํานยุติธรรม','สำนะกสวัสดิการ','สํานะกสวัสดิการ','สำนะกฃานพาณิชย์','สํานะกฃานพาณิชย์','กองคุ้มครองและ','ห้องเก็บของกลางคดี','ศูนย์บริการคนพิการ','สำงานประชาสัมพันธ์','สํางานประชาสัมพันธ์'];
+const EXPLICIT_PRIVATE_KEYWORDS = ['เอกชน'];
+const GOV_KEYWORDS = ['กรม','กระทรวง','สำนักงาน','สํานักงาน','เทศบาล','องค์การบริหารส่วนตำบล','องค์การบริหารส่วนตําบล','อบต','อบจ','องค์การบริหารส่วนจังหวัด','ที่ว่าการอำเภอ','ที่ว่าการอําเภอ','ศาล','สถานีตำรวจ','สถานีตํารวจ','ตำรวจ','ตํารวจ','โรงพยาบาล','มหาวิทยาลัย','สถาบันการศึกษา','โรงเรียน','การไฟฟ้า','การประปา','ธนาคารแห่งประเทศไทย','การรถไฟ','องค์การกระจายเสียง','ปตท.','การท่าเรือ','สำนักนายก','สํานักนายก','เทศบาลตำบล','เทศบาลตําบล','เทศบาลนคร','เทศบาลเมือง','สาธารณสุข','วิทยาลัย','ททท','การท่องเที่ยวแห่งประเทศไทย','ท่าอากาศยาน','องค์การเภสัชกรรม','ศูนย์วิจัย','สำนักงานส่งเสริม','สํานักงานส่งเสริม','สำนักงานทางหลวง','สํานักงานทางหลวง','ศูนย์สร้างทาง','พิพิธภัณฑสถานแห่งชาติ','มทบ.','ฝ่ายสรรพกำลัง','ฝ่ายสรรพกําลัง','สภาผู้แทนราษฎร','คณะกรรมการคุ้มครองผู้บริโภค','สวทช','จัดหางาน','กองทัพ','เรือนจำ','เรือนจํา','สรรพากร','สรรพสามิต','ที่ดิน','ปกครองส่วนท้องถิ่น','องค์การบริหาร'];
+const PRIVATE_KEYWORDS = ['บริษัท','จำกัด','จํากัด','ห้างหุ้นส่วน','หจก','บจก','ธนาคารกสิกร','ธนาคารกรุงเทพ','ธนาคารไทยพาณิชย์','ธนาคารกรุงศรี','ธนาคารทหารไทย','โรงแรม','รีสอร์ท','เรสอร์ท','ร้าน','Resort','Hotel','Spa','Marriott','InterContinental','Renaissance','Studio','สโมสรฟุตบอล','อคาเดมี่','fitness','Gym','Club',
+  'Co.,Ltd','Co., Ltd','CO.,LTD','Limited','Ltd.','Ltd,','LLC','Technology','Technologies','Inc.','Corporation','Industrial','Company Limited',
+  'Ritz Carlton','Banyan Tree','Aman ','Kholak','Six senses','Novotel','โนโวเทล','Centara','Anantara','อนันตรา','Splash beach','Bluesotel','Idyllic concept','Kamalaya','คามาลายา','Royal orchid','รอยัลออคิด','โรงเเรม','Naka island','SAii ','อวานี','วิลเลจ','Village','วิลลาส',
+  'Bosch','allnex','Belton','Moriroku','Valeo','Western Digital','SUTO ITEC','Analog devices','Novacyl','Bluebik','Oracle Architects','EY OFFICE','DIA International','Thai aviation service','สหวิริยาสตีล','ไทย-สวีดิช แอสเซมบลีย์','โตโยด้า โกเซ','ฮันนี่คอร์ปอเรชั่น','โรงงานน้ำตาล','โรงงานน้ํา','โรงงานอุตสาหกรรม','พีรพัฒน์ เทคโนโลยี','เพาเวอร์ไลน์ เอ็นจิเนียริ่ง','บูรพาคอนกรีต','สโตนเฮ้จน์','โกลเด้นท์ฮิลล์','ทวีมงคลก่อสร้าง','Constuction lines','Construction lines','SRL เอ็นจิเนียริง','Consultant & Management','อีเอ็มเอส เอ็นจิเนียร์ริ่ง','Planning Engineering','Department Digital Transformation','โปรเกรส เน็ตเวิร์ค คอนซัลท์','มิดลิเมด บีเอฟเอส','สายการบินสปริงเเอร์ไลน์','สายการบินสปริงแอร์ไลน์','ทีวีพูลกรุ๊ป','TVPOOL GROUP','เซ็นทรัล','ห้างสรรพสินค้าเซ็นทรัล','สโมสรทรู','มติชน','Harian Disway','รพ.กรุงเทพ',
+  'Virgin Active','WOLF wellness','Fit D space','pisces pilates','ฟิตเนส','ฟิตดี','Yak fitness','Yak 101','ฟิตฟอเอเวอร์','Play Strong','Fit-D','ALPHA HEALTH','อัลฟ่าเฮลท์',
+  'สปา','Travel','Moxy','Marin Phuket','ริทซ์','นีสอร์ท','ซี อาร์ ซี','ซีอาร์ซี'];
+
+function classifyOrgSector(orgRaw) {
+  const org = String(orgRaw || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  if (!org) return '';
+  if (SOE_EXACT.includes(org)) return 'รัฐวิสาหกิจ';
+  if (EXPLICIT_PRIVATE_KEYWORDS.some(k => org.includes(k))) return 'เอกชน';
+  if (NGO_KEYWORDS.some(k => org.includes(k))) return 'องค์กรไม่แสวงกำไร/สมาคม';
+  if (FOREIGN_UNI_KEYWORDS.some(k => org.includes(k))) return 'สถานศึกษาต่างประเทศ';
+  const orgLower = org.toLowerCase();
+  const isGov = GOV_KEYWORDS.some(k => org.includes(k)) || GOV_EXTRA_KEYWORDS.some(k => orgLower.includes(k.toLowerCase()));
+  const isPriv = PRIVATE_KEYWORDS.some(k => orgLower.includes(k.toLowerCase()));
+  if (isGov && !isPriv) return 'ราชการ/รัฐวิสาหกิจ/สถานศึกษาไทย';
+  if (isPriv) return 'เอกชน';
+  if (isGov) return 'ราชการ/รัฐวิสาหกิจ/สถานศึกษาไทย';
+  return 'ไม่ทราบ';
+}
+
 async function loadData() {
   const refreshButton = document.getElementById('refreshButton');
   const previousFilters = {
     school: document.getElementById('filterSchool')?.value || '',
     major: document.getElementById('filterMajor')?.value || '',
     semester: document.getElementById('filterSemester')?.value || '',
+    sector: document.getElementById('filterSector')?.value || '',
     search: document.getElementById('searchInput')?.value || ''
   };
   document.getElementById('loadingBar').style.display = 'block';
@@ -710,6 +747,7 @@ async function loadData() {
         major,
         semester: cells[4]?.v || '',
         org: cells[5]?.v || '',
+        sector: classifyOrgSector(cells[5]?.v || ''),
         province: cells[6]?.v || '',
         compensation: cells[7]?.v || '',
         allowance: parseInt(cells[8]?.v) || null,
@@ -746,11 +784,13 @@ function restoreFilters(filters) {
   const schoolSel = document.getElementById('filterSchool');
   const majorSel = document.getElementById('filterMajor');
   const semesterSel = document.getElementById('filterSemester');
+  const sectorSel = document.getElementById('filterSector');
   const searchInput = document.getElementById('searchInput');
   if (filters.school && [...schoolSel.options].some(o => o.value === filters.school)) schoolSel.value = filters.school;
   onSchoolChange();
   if (filters.major && [...majorSel.options].some(o => o.value === filters.major)) majorSel.value = filters.major;
   if (filters.semester && [...semesterSel.options].some(o => o.value === filters.semester)) semesterSel.value = filters.semester;
+  if (filters.sector && sectorSel && [...sectorSel.options].some(o => o.value === filters.sector)) sectorSel.value = filters.sector;
   if (searchInput) searchInput.value = filters.search;
 }
 
@@ -786,6 +826,17 @@ function populateFilters() {
   const semesterSel = document.getElementById('filterSemester');
   semesterSel.innerHTML = '<option value="">-- ทั้งหมด --</option>';
   semesters.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; semesterSel.appendChild(o); });
+
+  const sectorCounts = countBy('sector', allData);
+  const sectorSel = document.getElementById('filterSector');
+  sectorSel.innerHTML = '<option value="">-- ทั้งหมด --</option>';
+  sectorCounts.forEach(([sector, count]) => {
+    if (!sector) return;
+    const o = document.createElement('option');
+    o.value = sector;
+    o.textContent = `${sector} (${count.toLocaleString()})`;
+    sectorSel.appendChild(o);
+  });
 
   document.getElementById('kpiTotal').textContent = allData.length.toLocaleString();
   document.getElementById('kpiMajors').textContent = majors.length;
@@ -829,12 +880,14 @@ function applyFilters() {
   const school = document.getElementById('filterSchool').value;
   const major = document.getElementById('filterMajor').value;
   const semester = document.getElementById('filterSemester').value;
+  const sector = document.getElementById('filterSector').value;
   const search = document.getElementById('searchInput').value.toLowerCase().trim();
 
   filteredData = allData.filter(d => {
     if (school && d.school !== school) return false;
     if (major && d.major !== major) return false;
     if (semester && normalizeSemester(d.semester) !== semester) return false;
+    if (sector && d.sector !== sector) return false;
     if (search) {
       const haystack = (d.name + d.school + d.major + d.org + d.province).toLowerCase();
       if (!haystack.includes(search)) return false;
@@ -1104,6 +1157,7 @@ function clearFilters() {
   document.getElementById('filterSchool').value = '';
   document.getElementById('filterMajor').value = '';
   document.getElementById('filterSemester').value = '';
+  document.getElementById('filterSector').value = '';
   document.getElementById('searchInput').value = '';
   applyFilters();
 }
